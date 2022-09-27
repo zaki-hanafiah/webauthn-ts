@@ -11,7 +11,14 @@ async function register(userId, userName, pin) {
 		const publicKeyCredentialCreationOptions = await getServerSideCreationOptions();
 
 		const el_json_print = document.getElementById('jsonPrint');
-		Object.assign(printed_data, { '/session/new': { response: { username: userName, pin: pin, registerRequest: publicKeyCredentialCreationOptions } }});
+		Object.assign(printed_data, { '/session/new': {
+			payload: { username: userName, pin: pin },
+			response: {
+				username: userName,
+				pin: pin,
+				registerRequest: publicKeyCredentialCreationOptions
+			}
+		}});
 		if (el_json_print) {
 			el_json_print.classList.add('border');
 			el_json_print.classList.add('border-2');
