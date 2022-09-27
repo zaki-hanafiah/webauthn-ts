@@ -1,13 +1,10 @@
 import crypto from "crypto";
-
 import * as store from "./../storage/persistentKeyStore";
-
 import * as uuid from "uuid-parse";
 import * as CBOR from "cbor";
-import { Response } from "express";
 
-//Function logic copied from Microsoft demo implementation: https://github.com/MicrosoftEdge/webauthnsample/blob/master/fido.js
-//Decrypt the authData Buffer and split it in its single information pieces. Its structure is specified here: https://w3c.github.io/webauthn/#authenticator-data
+// Function logic copied from Microsoft demo implementation: https://github.com/MicrosoftEdge/webauthnsample/blob/master/fido.js
+// Decrypt the authData Buffer and split it in its single information pieces. Its structure is specified here: https://w3c.github.io/webauthn/#authenticator-data
 export function parseAuthenticatorData(authData: Buffer) {
     try {
         const authenticatorData: any = {};
@@ -17,35 +14,34 @@ export function parseAuthenticatorData(authData: Buffer) {
         authenticatorData.flags = authData[32];
         authenticatorData.signCount = (authData[33] << 24) | (authData[34] << 16) | (authData[35] << 8) | (authData[36]);
 
-        //Check if the client sent attestedCredentialdata, which is necessary for every new public key scheduled. This is indicated by the 6th bit of the flag byte being 1 (See specification at function start for reference)
+        // Check if the client sent attestedCredentialdata, which is necessary for every new public key scheduled. This is indicated by the 6th bit of the flag byte being 1 (See specification at function start for reference)
         if (authenticatorData.flags & 64) {
-            //Extract the data from the Buffer. Reference of the structure can be found here: https://w3c.github.io/webauthn/#sctn-attested-credential-data
+            // Extract the data from the Buffer. Reference of the structure can be found here: https://w3c.github.io/webauthn/#sctn-attested-credential-data
             const attestedCredentialData: { [key: string]: any } = {};
             attestedCredentialData.aaguid = uuid.unparse(authData.slice(37, 53)).toUpperCase();
             attestedCredentialData.credentialIdLength = (authData[53] << 8) | authData[54];
             attestedCredentialData.credentialId = authData.slice(55, 55 + attestedCredentialData.credentialIdLength);
-            //Public key is the first CBOR element of the remaining buffer
+            // Public key is the first CBOR element of the remaining buffer
             const publicKeyCoseBuffer = authData.slice(55 + attestedCredentialData.credentialIdLength, authData.length);
 
-            //convert public key to JWK for storage
+            // Convert public key to JWK for storage
             attestedCredentialData.credentialPublicKey = coseToJwk(publicKeyCoseBuffer);
 
             authenticatorData.attestedCredentialData = attestedCredentialData;
         }
 
-        //Check for extension data in the authData, which is indicated by the 7th bit of the flag byte being 1 (See specification at function start for reference)
+        // Check for extension data in the authData, which is indicated by the 7th bit of the flag byte being 1 (See specification at function start for reference)
         if (authenticatorData.flags & 128) {
-            //has extension data
+            // has extension data
 
             let extensionDataCbor;
 
             if (authenticatorData.attestedCredentialData) {
-                //if we have attesttestedCredentialData, then extension data is
-                //the second element
+                // if we have attesttestedCredentialData, then extension data is the second element
                 extensionDataCbor = CBOR.decodeAllSync(authData.slice(55 + authenticatorData.attestedCredentialData.credentialIdLength, authData.length));
                 extensionDataCbor = extensionDataCbor[1];
             } else {
-                //Else it's the first element
+                // Else it's the first element
                 extensionDataCbor = CBOR.decodeFirstSync(authData.slice(37, authData.length));
             }
 
@@ -60,24 +56,23 @@ export function parseAuthenticatorData(authData: Buffer) {
 
 export function generatePublicKeyCredentialCreationOptions() {
     return {
-        //The challenge has to be a random string emitted by our application server, see documentation for getServerSideChallenge
+        // The challenge has to be a random string emitted by our application server, see documentation for getServerSideChallenge
         challenge: generateChallenge(),
-        //A string identifier for our server / service. Name is the string displayed to the user when prompted for logging in with our server, id the scope to which our newly scheduled public key will be scoped to.
+        // A string identifier for our server / service. Name is the string displayed to the user when prompted for logging in with our server, id the scope to which our newly scheduled public key will be scoped to.
         rp: {
             name: process.env.RPNAME,
             id: process.env.RPID
         },
         user: {
-            //An user-unique ID in your system. If you use an Identity Provider like Azure Active Directory or Auth0, you can use for example the userId scheduled by these systems as an Id
-            //In this demo, the userId is generated client-side, so we don't have to insert anything here
+            // A user-unique ID in your system. If you use an Identity Provider like Azure Active Directory or Auth0, you can use for example the userId scheduled by these systems as an Id
+            // In this demo, the userId is generated client-side, so we don't have to insert anything here
             id: "",
-            //User name of the user, e.g. the mail adress with which he normally logs into the page
+            // Username of the user, e.g. the email address with which he normally logs into the page
             name: "",
-            //Real Name of the user
+            // Real Name of the user
             displayName: ""
         },
-        //Specifies which kinds of algorithms are accepted for the creation of the public key. You can find a full list of algorithm codes here: https://www.iana.org/assignments/cose/cose.xhtml#algorithms 
-        //For Windows Hello, you must use { alg: -257, type: "public-key" }
+        // Specifies which kinds of algorithms are accepted for the creation of the public key. You can find a full list of algorithm codes here: https://www.iana.org/assignments/cose/cose.xhtml#algorithms
         pubKeyCredParams: [
             { alg: -7, type: "public-key" },
             { alg: -8, type: "public-key" },
@@ -90,17 +85,17 @@ export function generatePublicKeyCredentialCreationOptions() {
             { alg: -258, type: "public-key" },
             { alg: -259, type: "public-key" }
         ],
-        //WebAuthn distincts between cross-platform authentication like YubiKeys (e.g. USB sticks that you have to insert into your PC to authenticate) and platform authentication like Windows Hello or Apple Touch ID. 
-        //https://w3c.github.io/webauthn/#dictdef-authenticatorselectioncriteria
+        // WebAuthn distincts between cross-platform authentication like YubiKeys (e.g. USB sticks that you have to insert into your PC to authenticate) and platform authentication like Windows Hello or Apple Touch ID.
+        // https://w3c.github.io/webauthn/#dictdef-authenticatorselectioncriteria
         authenticatorSelection: {
-            //Select authenticators that support username-less flows
+            // Select authenticators that support username-less flows
             requireResidentKey: false,
-            //This attribute decides if the client asks the user again if he really wants to sign up.
+            // This attribute decides if the client asks the user again if he really wants to sign up.
             userVerification: "discouraged"
         },
-        //Time in Milliseconds the user has to complete the authentication before it times out and failes automatically
+        // Time in Milliseconds the user has to complete the authentication before it times out and failes automatically
         timeout: 60000,
-        //Specifies if the relying party (e.g. our server) wishes to know which Authenticator performed the authentication of the user. You can find all details here: https://w3c.github.io/webauthn/#attestation-conveyance
+        // Specifies if the relying party (e.g. our server) wishes to know which Authenticator performed the authentication of the user. You can find all details here: https://w3c.github.io/webauthn/#attestation-conveyance
         attestation: "indirect"
     }
 }
@@ -188,7 +183,7 @@ export function sha256(data: any) {
     return hash.digest();
 }
 
-//Helper function that generates a random string that can be used for the user challenge
+// Helper function that generates a random string that can be used for the user challenge
 function generateChallenge() {
     let charPool = "1234567890qwertzuiopasdfghjklyxcvbnm";
     let rString = "";
@@ -198,15 +193,15 @@ function generateChallenge() {
     return rString;
 }
 
-//As Webauthn provides us only with the challenge as a base64 encoded string, we have to manually convert the scheduled plaintext string
+// As Webauthn provides us only with the challenge as a base64 encoded string, we have to manually convert the scheduled plaintext string
 function base64encode(string: string) {
     let buff = Buffer.from(string);
     let base64String = buff.toString('base64');
     return base64String.substring(0, base64String.length - 1);
 }
 
-//Copied from https://medium.com/@herrjemand/verifying-fido-tpm2-0-attestation-fc7243847498
-//Full specification can be found here (Chapter 10.12.8): https://www.trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf
+// Copied from https://medium.com/@herrjemand/verifying-fido-tpm2-0-attestation-fc7243847498
+// Full specification can be found here (Chapter 10.12.8): https://www.trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf
 export function parseCertInfo(certInfoBuffer: Buffer) {
     let magicBuffer = certInfoBuffer.slice(0, 4);
     let magic = magicBuffer.readUInt32BE(0);
@@ -247,7 +242,7 @@ export function parseCertInfo(certInfoBuffer: Buffer) {
     certInfoBuffer = certInfoBuffer.slice(2 + attestedQualifiedNameBufferLength)
 
     let attested = {
-        //@ts-ignore Because of parsing issues with types that I didn't want to get into too deep
+        // @ts-ignore Because of parsing issues with types that I didn't want to get into too deep
         nameAlg: TPM_ALG[attestedNameBuffer.slice(0, 2).readUInt16BE(0)],
         name: attestedNameBuffer,
         qualifiedName: attestedQualifiedNameBuffer
@@ -264,16 +259,16 @@ export function parseCertInfo(certInfoBuffer: Buffer) {
     }
 }
 
-//Copied from https://medium.com/@herrjemand/verifying-fido-tpm2-0-attestation-fc7243847498
-//Full specification can be found here (Chapter 12.2.4): https://www.trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf
+// Copied from https://medium.com/@herrjemand/verifying-fido-tpm2-0-attestation-fc7243847498
+// Full specification can be found here (Chapter 12.2.4): https://www.trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf
 export function parsePubArea(pubAreaBuffer: Buffer) {
     let typeBuffer = pubAreaBuffer.slice(0, 2);
-    //@ts-ignore Because of parsing issues with types that I didn't want to get into too deep
+    // @ts-ignore Because of parsing issues with types that I didn't want to get into too deep
     let type = TPM_ALG[typeBuffer.readUInt16BE(0)];
     pubAreaBuffer = pubAreaBuffer.slice(2);
 
     let nameAlgBuffer = pubAreaBuffer.slice(0, 2)
-    //@ts-ignore Because of parsing issues with types that I didn't want to get into too deep
+    // @ts-ignore Because of parsing issues with types that I didn't want to get into too deep
     let nameAlg = TPM_ALG[nameAlgBuffer.readUInt16BE(0)];
     pubAreaBuffer = pubAreaBuffer.slice(2);
 
@@ -302,9 +297,9 @@ export function parsePubArea(pubAreaBuffer: Buffer) {
     let parameters = undefined;
     if (type === 'TPM_ALG_RSA') {
         parameters = {
-            //@ts-ignore Because of parsing issues with types that I didn't want to get into too deep
+            // @ts-ignore Because of parsing issues with types that I didn't want to get into too deep
             symmetric: TPM_ALG[pubAreaBuffer.slice(0, 2).readUInt16BE(0)],
-            //@ts-ignore Because of parsing issues with types that I didn't want to get into too deep
+            // @ts-ignore Because of parsing issues with types that I didn't want to get into too deep
             scheme: TPM_ALG[pubAreaBuffer.slice(2, 4).readUInt16BE(0)],
             keyBits: pubAreaBuffer.slice(4, 6).readUInt16BE(0),
             exponent: pubAreaBuffer.slice(6, 10).readUInt32BE(0)
@@ -312,13 +307,13 @@ export function parsePubArea(pubAreaBuffer: Buffer) {
         pubAreaBuffer = pubAreaBuffer.slice(10);
     } else if (type === 'TPM_ALG_ECC') {
         parameters = {
-            //@ts-ignore Because of parsing issues with types that I didn't want to get into too deep
+            // @ts-ignore Because of parsing issues with types that I didn't want to get into too deep
             symmetric: TPM_ALG[pubAreaBuffer.slice(0, 2).readUInt16BE(0)],
-            //@ts-ignore Because of parsing issues with types that I didn't want to get into too deep
+            // @ts-ignore Because of parsing issues with types that I didn't want to get into too deep
             scheme: TPM_ALG[pubAreaBuffer.slice(2, 4).readUInt16BE(0)],
-            //@ts-ignore Because of parsing issues with types that I didn't want to get into too deep
+            // @ts-ignore Because of parsing issues with types that I didn't want to get into too deep
             curveID: TPM_ECC_CURVE[pubAreaBuffer.slice(4, 6).readUInt16BE(0)],
-            //@ts-ignore Because of parsing issues with types that I didn't want to get into too deep
+            // @ts-ignore Because of parsing issues with types that I didn't want to get into too deep
             kdf: TPM_ALG[pubAreaBuffer.slice(6, 8).readUInt16BE(0)]
         }
         pubAreaBuffer = pubAreaBuffer.slice(8);

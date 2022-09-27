@@ -12,9 +12,9 @@ async function register(userId, userName, pin) {
 
 		const el_json_print = document.getElementById('jsonPrint');
 		Object.assign(printed_data, { '/session/new': {
-			payload: { username: userName, pin: pin },
+			payload: { userName: userName, pin: pin },
 			response: {
-				username: userName,
+				userName: userName,
 				pin: pin,
 				registerRequest: publicKeyCredentialCreationOptions
 			}
@@ -35,6 +35,7 @@ async function register(userId, userName, pin) {
 		publicKeyCredentialCreationOptions.user.name = userName;
 		publicKeyCredentialCreationOptions.user.displayName = userName;
 		publicKeyCredentialCreationOptions.authenticatorSelection.authenticatorAttachment = "cross-platform";
+		publicKeyCredentialCreationOptions.authenticatorSelection.userVerification = "required";
 
 		//Here a new credential is created which means the client verifies the user (e.g. through YubiKey) and asks for consent to store a new login credential for this website.
 		// If the user agrees, a new credentialObject is scheduled.
@@ -42,7 +43,7 @@ async function register(userId, userName, pin) {
 			publicKey: publicKeyCredentialCreationOptions
 		});
 
-		// Response from navigator.credentials.create will be used for attestion below
+		// Response from navigator.credentials.create will be used for attestation below
 		let rawId = new Uint8Array(credential.rawId);
 
 		//The credential object is secured by the client and can for example not be sent directly to the server.
@@ -67,6 +68,7 @@ async function register(userId, userName, pin) {
 		}).then(resp => {
 			console.log(resp);
 			if (resp.status === 200) {
+				document.cookie = "userName=" + userName;
 				loadLogin();
 			}
 			else {
@@ -89,26 +91,45 @@ async function register(userId, userName, pin) {
 
 }
 
-//This function triggers the verification of a user who already has a credential for this website stored on the client.
+// This function triggers the verification of a user who already has a credential for this website stored on the client.
 // Steps 1 - 3 as well as 5 - 6 of the specified verification process are already completed at the client, all further validation takes place at the webserver.
 // You can find the full specification here: https://w3c.github.io/webauthn/#sctn-verifying-assertion
-async function login(userId) {
+async function login(userId, userName) {
 	try {
-		//To create a new credential that is conformed with the WebAuthn standard, we have to provide some options.
+		// To create a new credential that is conformed with the WebAuthn standard, we have to provide some options.
 		// A complete overview over all options can be found here: https://w3c.github.io/webauthn/#dictionary-assertion-options
 		const publicKeyCredentialRequestOptions = await getServerSideRequestOptions();
 
 		publicKeyCredentialRequestOptions.challenge = Uint8Array.from(
 			publicKeyCredentialRequestOptions.challenge, c => c.charCodeAt(0)).buffer;
 		publicKeyCredentialRequestOptions.allowCredentials[0].id = bufferDecode(publicKeyCredentialRequestOptions.allowCredentials[0].id);
+		publicKeyCredentialRequestOptions.userVerification = "required";
 
-		console.log(publicKeyCredentialRequestOptions);
-		//Here the user is prompted to verify. If the verification succeeds, the client returns an object with all relevant credentials of the user.
+		const el_json_print = document.getElementById('jsonPrint');
+		Object.assign(printed_data, { '/session/new': {
+				payload: { username: userName },
+				response: {
+					userName: userName,
+					userId: userId,
+					signRequest: publicKeyCredentialRequestOptions
+				}
+			}});
+		if (el_json_print) {
+			el_json_print.classList.add('border');
+			el_json_print.classList.add('border-2');
+			el_json_print.classList.add('rounded');
+			el_json_print.classList.add('border-grey-100');
+			el_json_print.classList.add('p-4');
+			el_json_print.innerHTML = prettyPrintJson.toHtml(printed_data);
+		}
+
+		// Here the user is prompted to verify. If the verification succeeds, the client returns an object with all relevant credentials of the user.
 		const assertion = await navigator.credentials.get({
 			publicKey: publicKeyCredentialRequestOptions
 		});
 
-		//The credential object is secured by the client and can for example not be sent directly to the server. Therefore we extract all relevant information from the object, transform it to a securely encoded and server-interpretable format and then send it to our server for further verification.
+		// The credential object is secured by the client and can for example not be sent directly to the server.
+		// Therefore, we extract all relevant information from the object, transform it to a securely encoded and server-interpretable format and then send it to our server for further verification.
 		const readableAssertion = {
 			id: base64encode(assertion.rawId),
 			rawId: base64encode(assertion.rawId),
@@ -139,6 +160,13 @@ async function login(userId) {
 				resp.text().then((t) => {
 					console.error(resp.status + " " + t);
 				})
+			}
+			Object.assign(printed_data, { '/session/webauth/new': {
+					payload: { pkc: readableAssertion },
+					response: { status: resp.status, ok: resp.ok }},
+			});
+			if (el_json_print) {
+				el_json_print.innerHTML = prettyPrintJson.toHtml(printed_data);
 			}
 		})
 	}
@@ -193,10 +221,18 @@ function startRegistration() {
 	}
 	else console.error("Parameters missing!");
 }
+
+function getCookie(name) {
+	function escape(s) { return s.replace(/([.*+?\^$(){}|\[\]\/\\])/g, '\\$1'); }
+	const match = document.cookie.match(RegExp('(?:^|;\\s*)' + escape(name) + '=([^;]*)'));
+	return match ? match[1] : null;
+}
+
 function doLogin() {
 	disableBtn();
-	let userId = document.cookie.split("=")[1];
-	login(userId).then(r => console.log(r));
+	const userName = getCookie('userName');
+	const userId = getCookie('userId');
+	login(userId, userName);
 }
 
 function generateId() {

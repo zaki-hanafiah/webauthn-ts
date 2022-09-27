@@ -23,11 +23,11 @@ import { AuthenticatorData } from "models/fido/AuthenticatorData";
  * clientDataHash: hash
  */
 export function registerKey(keyCredentialObject: { [key: string]: any }, userId: string): ErrorMessage {
-	//Step 1 and 2 of the registering protocol specified by W3C is done at the client
-	//Step 3: Parse the clientDataJSON string to a JSON object
+	// Step 1 and 2 of the registering protocol specified by W3C is done at the client
+	// Step 3: Parse the clientDataJSON string to a JSON object
 	const clientData: ClientDataJSON = JSON.parse(keyCredentialObject.clientDataJSON);
 
-	//Step 4: Verify that clientData.type is webauthn.create
+	// Step 4: Verify that clientData.type is webauthn.create
 	if (!(clientData.type === "webauthn.create")) {
 		return {
 			status: 403,
@@ -35,16 +35,16 @@ export function registerKey(keyCredentialObject: { [key: string]: any }, userId:
 		}
 	}
 
-	//Step 5: Verify that clientData.challenge is the same as the base64 specified challenge in your browsers options.challenge
-	//In our cache we store issued challenges and if they were already used (boolean). So if the attribute in our cache doesn't exist or is already true, we have to stop the process.
+	// Step 5: Verify that clientData.challenge is the same as the base64 specified challenge in your browsers options.challenge
+	// In our cache we store issued challenges and if they were already used (boolean). So if the attribute in our cache doesn't exist or is already true, we have to stop the process.
 	if (cache.get(clientData.challenge) === true) {
 		return {
 			status: 403,
 			text: "The challenge of this request has already been resolved, Hint of replay attack"
 		}
 	}
-	//Explicit check, as (cache[clientData.challenge] = undefined) == false => true 
-	else if (!cache.get(clientData.challenge) === false) {
+	// Explicit check, as (cache[clientData.challenge] = undefined) == false => true
+	else if (!!cache.get(clientData.challenge)) {
 		return {
 			status: 403,
 			text: "The challenge of this request does not match any challenge issued"
@@ -52,9 +52,9 @@ export function registerKey(keyCredentialObject: { [key: string]: any }, userId:
 	}
 	else cache.set(clientData.challenge,true);
 
-	//Step 6: Check that clientData.origin is actually the origin you would expect
-	//To specify this, we give our server the URL that it is running on as an environment variable
-	//If no environment variable is specified, skip this step
+	// Step 6: Check that clientData.origin is actually the origin you would expect
+	// To specify this, we give our server the URL that it is running on as an environment variable
+	// If no environment variable is specified, skip this step
 	// if (process.env.BASEURL && !(clientData.origin === process.env.BASEURL)) {
 	// 	return {
 	// 		status: 403,
@@ -154,7 +154,7 @@ export function registerKey(keyCredentialObject: { [key: string]: any }, userId:
 		}
 	}
 
-	//Step 17: Obtain a list of acceptable trust anchors (certficates or public keys) for the current attestation type. This Step is positive when you get a trust anchor scheduled using the data given in authData.
+	//Step 17: Obtain a list of acceptable trust anchors (certificates or public keys) for the current attestation type. This Step is positive when you get a trust anchor scheduled using the data given in authData.
 	//TODO: Implement Trust anchor acquisition
 
 	//Step 18: Verify the trustworthiness of the attestation. To do so, take the outputs of Step 16 (which by specification would be that the attestation is either self-attested, used ECDAA, used a X.509 certificate or did no attestation at all).
