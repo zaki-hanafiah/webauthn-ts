@@ -54,30 +54,32 @@ export function registerKey(keyCredentialObject: { [key: string]: any }, userId:
 
 	// Step 6: Check that clientData.origin is actually the origin you would expect
 	// To specify this, we give our server the URL that it is running on as an environment variable
-	// If no environment variable is specified, skip this step
-	// if (process.env.BASEURL && !(clientData.origin === process.env.BASEURL)) {
-	// 	return {
-	// 		status: 403,
-	// 		text: "The origin of the request ("+clientData.origin+") does not come from the expected host server"
-	// 	}
-	// }
-
-	//Step 7: Verify that token bindings of clientDataJSON match the tokens of the request. If there is no tokenBinding object in the clientDataJSON, that means that the client doesn't support tokenBindings. The parameter and therefore this step is optional.
-	if (clientData.tokenBinding) {
-		//TODO Create TLS check
+	// If no environment variable is specified or is localhost, skip this step
+	if (!/localhost/g.test(clientData.origin)) {
+		if (process.env.BASEURL && !(clientData.origin === process.env.BASEURL)) {
+			return {
+				status: 403,
+				text: "The origin of the request ("+clientData.origin+") does not come from the expected host server"
+			}
+		}
 	}
 
-	//Step 8: Hash clientDataJSON with the SHA256 algorithm
-	//For understandability, we re-stringify clientData. We could have also used keyCredentialObject.clientDataJSON as this is already the "raw" JSON
+	// Step 7: Verify that token bindings of clientDataJSON match the tokens of the request. If there is no tokenBinding object in the clientDataJSON, that means that the client doesn't support tokenBindings. The parameter and therefore this step is optional.
+	if (clientData.tokenBinding) {
+		// TODO Create TLS check
+	}
+
+	// Step 8: Hash clientDataJSON with the SHA256 algorithm
+	// For understandability, we re-stringify clientData. We could have also used keyCredentialObject.clientDataJSON as this is already the "raw" JSON
 	const clientDataHash = sha256(JSON.stringify(clientData));
 
-	//Step 9: Decode the attestationObject using CBOR
-	//In this step, we also convert the authData Buffer into an usable JSON
+	// Step 9: Decode the attestationObject using CBOR
+	// In this step, we also convert the authData Buffer into an usable JSON
 	const attestation: GenericAttestation = CBOR.decodeFirstSync(Buffer.from(keyCredentialObject.attestationObject, 'base64'));
 	const authenticatorData: AuthenticatorData = parseAuthenticatorData(attestation.authData);
 
-	//Step 10: Verify that authenticatorData.rpIdHash is equal to the SHA256 encoded rpId (Relying Party ID) that we specified in the options at the client
-	//If no environment variable is specified, skip this step
+	// Step 10: Verify that authenticatorData.rpIdHash is equal to the SHA256 encoded rpId (Relying Party ID) that we specified in the options at the client
+	// If no environment variable is specified, skip this step
 	if (process.env.RPID && !authenticatorData.rpIdHash.equals(sha256(process.env.RPID))) {
 		return {
 			status: 403,
@@ -85,7 +87,7 @@ export function registerKey(keyCredentialObject: { [key: string]: any }, userId:
 		}
 	}
 
-	//Step 11: Verify that AuthenticatorData has the userPresent bit set to 1. The flags attribute in authenticatorData represents a 8bit array (one byte) that encodes possible flags that the client uses to transport information. You can find more detail in the documentation of parseAuthenticatiorData. userPresent is the first bit, meaning that xxxxxxx1 AND 00000001 must be 1.
+	// Step 11: Verify that AuthenticatorData has the userPresent bit set to 1. The flags attribute in authenticatorData represents a 8bit array (one byte) that encodes possible flags that the client uses to transport information. You can find more detail in the documentation of parseAuthenticatiorData. userPresent is the first bit, meaning that xxxxxxx1 AND 00000001 must be 1.
 	if (!(authenticatorData.flags & 1)) {
 		return {
 			status: 403,
@@ -93,16 +95,16 @@ export function registerKey(keyCredentialObject: { [key: string]: any }, userId:
 		}
 	}
 
-	//Step 12:  Verify that AuthenticatorData has the userVerified bit set to 1. This is only necessary when the registration requires prior user authentication (which is the case most times). userVerified is encoded on the third bit, meaning xxxxx1xx AND 00000100 must be at least 4.
-	// if (!(authenticatorData.flags & 4)) {
-	// 	return {
-	// 		status: 403,
-	// 		text: "The request indicates that the user did not verify before the client sent the request"
-	// 	}
-	// }
+	// Step 12:  Verify that AuthenticatorData has the userVerified bit set to 1. This is only necessary when the registration requires prior user authentication (which is the case most times). userVerified is encoded on the third bit, meaning xxxxx1xx AND 00000100 must be at least 4.
+	if (!(authenticatorData.flags & 4)) {
+		return {
+			status: 403,
+			text: "The request indicates that the user did not verify before the client sent the request"
+		}
+	}
 
-	//Step 13: Verify that the algorithm used to create the Public key matches one of the allowed encryption methods that you specified in the options on the client side.
-	//If no environment variable is specified, skip this step
+	// Step 13: Verify that the algorithm used to create the Public key matches one of the allowed encryption methods that you specified in the options on the client side.
+	// If no environment variable is specified, skip this step
 	if (process.env.ALLOWEDALGORITHMS && !process.env.ALLOWEDALGORITHMS.split(",").includes(authenticatorData.attestedCredentialData.credentialPublicKey.kty)) {
 		return {
 			status: 403,

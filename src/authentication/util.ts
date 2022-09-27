@@ -133,21 +133,20 @@ export function testCreateCreds() {
     }
 }
 
-export function generatePublicKeyCredentialRequestOptions(userId:string) {
+export function generatePublicKeyCredentialRequestOptions(userId: string) {
     return {
         challenge: generateChallenge(),
         timeout: 60000,
-        // userVerification: "discouraged",
-        // rpId: process.env.RPID,
+        rpId: process.env.RPID,
         allowCredentials: [
-            {type: "public-key", id: store.get(userId).id}
+            { type: "public-key", id: store.get(userId)?.id }
         ],
         // transports: ["internal", "usb", "nfc", "ble"]
     }
 }
 
 
-//Convert the Public Key from the cose format to jwk format
+// Convert the Public Key from the cose format to jwk format
 export function coseToJwk(cose: any) {
     try {
         let publicKeyJwk = {};
@@ -176,7 +175,7 @@ export function coseToJwk(cose: any) {
     }
 }
 
-//Hash a given data with the SHA256 algorithm
+// Hash a given data with the SHA256 algorithm
 export function sha256(data: any) {
     const hash = crypto.createHash('sha256');
     hash.update(data);
@@ -376,7 +375,6 @@ export function ecdaaWarning() {
 export function algorithmWarning(alg:number | string) {
     console.warn("The authenticator is using an algorithm which is not supported to encrypt its signature. This is a shortcoming of this library and will be fixed in further releases. If you want to support the development of this library, please create an issue on the GitHub repository with following information:\n\n TPM Verification Algorithm not supported!\nAlgorithm: " + alg);
 }
-
 
 let TPM_ALG = {
     0x0000: "TPM_ALG_ERROR",
