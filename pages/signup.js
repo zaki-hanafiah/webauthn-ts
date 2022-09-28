@@ -70,5 +70,6 @@ function disableBtn() {
 
 function verifyLogin() {
     let form = document.getElementsByClassName('form')[0]
-    form.innerHTML = '<div class="mb-4"><p>You are now logged in.</p></div>'
+    form.innerHTML =
+        '<div class="mb-4"><p>You are now logged in.</p><div class="flex items-center justify-center mt-2"><button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" onclick="clearCookies()">Clear Session</button></div></div>'
 }
