@@ -3,6 +3,9 @@
     "version": "0.0.1",
     "description": "",
     "main": "index.js",
+    "engines": {
+        "node": "18.x"
+    },
     "scripts": {
         "start": "npx tsc && node dest/index",
         "css": "npx tailwindcss -i ./src/styles/style.css -o pages/style.css --watch",
