@@ -1,19 +1,16 @@
 {
     "version": 2,
-    "installCommand": "npm install",
-    "buildCommand": "npx tsc && node dest/index",
-    "outputDirectory": "dest",
     "builds": [
         {
-            "src": "dest/index.js",
+            "src": "dist/index.js",
             "use": "@vercel/node",
-            "config": { "includeFiles": ["dest/**"] }
+            "config": { "includeFiles": ["dist/**"] }
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "dest/index.js"
+            "dest": "dist/index.js"
         }
     ]
 }

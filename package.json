@@ -7,14 +7,13 @@
         "node": "18.x"
     },
     "scripts": {
-        "start": "npx nodemon src/index.ts",
-        "css": "npx tailwindcss -i ./src/styles/style.css -o pages/style.css --watch",
+        "start": "nodemon src/index.ts",
+        "css": "tailwindcss -i ./src/styles/style.css -o pages/style.css --watch",
         "prettify": "prettier --write **/*.{css,js,ts,json}",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "debug": "npx tsc && node dest/index",
-        "build": "rimraf dest && npx tsc",
-        "ts.check": "npx tsc --project tsconfig.json",
-        "add-build": "git add dest",
+        "build": "rimraf dist && tsc",
+        "ts.check": "tsc --project tsconfig.json",
+        "add-build": "git add dist",
         "prepare": "husky install"
     },
     "pre-commit": [
