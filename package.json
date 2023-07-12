@@ -7,13 +7,13 @@
         "node": "18.x"
     },
     "scripts": {
-        "start": "npx tsc && node dest/index",
+        "start": "npx nodemon src/index.ts",
         "css": "npx tailwindcss -i ./src/styles/style.css -o pages/style.css --watch",
         "prettify": "prettier --write **/*.{css,js,ts,json}",
         "test": "echo \"Error: no test specified\" && exit 1",
         "debug": "npx tsc && node dest/index",
         "build": "rimraf dest && npx tsc",
-        "ts.check": "tsc --project tsconfig.json",
+        "ts.check": "npx tsc --project tsconfig.json",
         "add-build": "git add dest",
         "prepare": "husky install"
     },
@@ -53,8 +53,10 @@
         "express": "^4.18.2",
         "jsonwebtoken": "^9.0.0",
         "jwk-to-pem": "^2.0.1",
+        "nodemon": "^3.0.1",
         "pre-commit": "^1.2.2",
         "rimraf": "^5.0.1",
+        "ts-node": "^10.9.1",
         "uuid-parse": "^1.1.0"
     }
 }
