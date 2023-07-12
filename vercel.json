@@ -1,5 +1,8 @@
 {
     "version": 2,
+    "installCommand": "npm install",
+    "buildCommand": "npx tsc && node dest/index",
+    "outputDirectory": "dest",
     "builds": [
         {
             "src": "dest/index.js",
