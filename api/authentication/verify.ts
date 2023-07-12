@@ -1,11 +1,11 @@
 import { PublicKeyCredential } from '../models/fido/PublicKeyCredential'
-import * as store from './../storage/persistentKeyStore'
-import * as cache from './../storage/challengeCache'
+import * as store from '../storage/persistentKeyStore'
+import * as cache from '../storage/challengeCache'
 import { parseAuthenticatorData, sha256 } from './util'
 import crypto from 'crypto'
 import jwkToPem, { JWK } from 'jwk-to-pem'
-import { ClientDataJSON } from 'models/fido/ClientDataJSON'
-import { AuthenticatorData } from 'models/fido/AuthenticatorData'
+import { ClientDataJSON } from '../models/fido/ClientDataJSON'
+import { AuthenticatorData } from '../models/fido/AuthenticatorData'
 import { ErrorMessage } from '../models/custom/ErrorMessage'
 
 // This method implements the W3C standard for verifying Webauthn login requests. You can find this standard here: https://w3c.github.io/webauthn/#sctn-verifying-assertion

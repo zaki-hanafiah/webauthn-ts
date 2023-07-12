@@ -4,15 +4,14 @@
  * https://w3c.github.io/webauthn/#attestation-statement
  */
 export interface GenericAttestation {
-	authData: Buffer;
-	fmt: string;
-	attStmt:
-	{
-		// alg: number;
-		// certInfo: ArrayBuffer;
-		// sig: ArrayBuffer;
-		// pubArea: ArrayBuffer;
-		// ver: string;
-		// x5c: Array<ArrayBuffer>;
-	}
+    authData: Buffer
+    fmt: string
+    attStmt: {
+        // alg: number;
+        // certInfo: ArrayBuffer;
+        // sig: ArrayBuffer;
+        // pubArea: ArrayBuffer;
+        // ver: string;
+        // x5c: Array<ArrayBuffer>;
+    }
 }

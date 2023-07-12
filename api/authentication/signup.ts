@@ -1,6 +1,6 @@
 import { parseAuthenticatorData, sha256 } from './util'
-import * as storage from './../storage/persistentKeyStore'
-import * as cache from './../storage/challengeCache'
+import * as storage from '../storage/persistentKeyStore'
+import * as cache from '../storage/challengeCache'
 
 import { GenericAttestation } from '../models/custom/GenericAttestation'
 import { ErrorMessage } from '../models/custom/ErrorMessage'
@@ -22,7 +22,7 @@ import {
 } from '../models/fido/Attestation Statement Format/None'
 
 import * as CBOR from 'cbor'
-import { AuthenticatorData } from 'models/fido/AuthenticatorData'
+import { AuthenticatorData } from '../models/fido/AuthenticatorData'
 
 /**
  *
