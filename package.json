@@ -47,7 +47,7 @@
         "@fidm/x509": "^1.2.1",
         "body-parser": "^1.20.1",
         "cbor": "^5.0.1",
-        "cookie-parser": "^1.4.4",
+        "cookie-parser": "^1.4.7",
         "dotenv": "^8.1.0",
         "express": "^4.21.2",
         "jsonwebtoken": "^9.0.0",
