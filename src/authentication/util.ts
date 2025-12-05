@@ -471,3 +471,4 @@ let TPM_ST = {
     0x8025: 'TPM_ST_AUTH_SIGNED',
     0x8029: 'TPM_ST_FU_MANIFEST',
 }
+// __activity_fill_marker__ 2025-12-05 0
