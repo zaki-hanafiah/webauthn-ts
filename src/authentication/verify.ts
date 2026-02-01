@@ -3,7 +3,6 @@ import * as store from '../storage/persistentKeyStore'
 import * as cache from '../storage/challengeCache'
 import { parseAuthenticatorData, sha256 } from './util'
 import crypto from 'crypto'
-import jwkToPem, { JWK } from 'jwk-to-pem'
 import { ClientDataJSON } from '../models/fido/ClientDataJSON'
 import { AuthenticatorData } from '../models/fido/AuthenticatorData'
 import { ErrorMessage } from '../models/custom/ErrorMessage'
@@ -131,6 +130,8 @@ export function verify(
 
     // Step 17: Verify that the signature is valid. To do so, concatenate authenticatorData and hash and encrypt it with credentialPublicKey (The key that is stored for our specific user).
     // Note: Verification step copied from https://github.com/MicrosoftEdge/webauthnsample/blob/master/fido.js
+    const jwk = user.credentialPublicKey as JsonWebKey
+    const keyObject = crypto.createPublicKey(jwk as crypto.KeyObject)
     const sig = Buffer.from(assertion.response.signature, 'base64')
     const verify =
         user.credentialPublicKey.kty === 'RSA'
@@ -138,7 +139,7 @@ export function verify(
             : crypto.createVerify('sha256')
     verify.update(authDataBuffer)
     verify.update(hash)
-    if (!verify.verify(jwkToPem(user.credentialPublicKey as JWK), sig))
+    if (!verify.verify(keyObject, sig))
         return {
             status: 403,
             text: 'Could not verify the client signature!',
