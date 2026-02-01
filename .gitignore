@@ -13,6 +13,7 @@ test.http
 
 # production
 /build
+/dist
 dest
 def
 
