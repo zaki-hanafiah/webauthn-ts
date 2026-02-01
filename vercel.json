@@ -5,7 +5,7 @@
             "src": "api/vercel.js",
             "use": "@vercel/node",
             "config": {
-                "includeFiles": ["dist/**", "pages/**", ".well-known/**"]
+                "includeFiles": ["dist/**"]
             }
         },
         {
@@ -25,6 +25,14 @@
         {
             "src": "/",
             "dest": "pages/home.html"
+        },
+        {
+            "src": "/(.*\\.js)",
+            "dest": "pages/$1"
+        },
+        {
+            "src": "/(.*\\.css)",
+            "dest": "pages/$1"
         }
     ]
 }
