@@ -1,12 +1,7 @@
 {
     "version": 2,
-    "builds": [
-        {
-            "src": "dist/index.js",
-            "use": "@vercel/node",
-            "config": { "includeFiles": ["dist/**"] }
-        }
-    ],
+    "buildCommand": "npx tsc",
+    "outputDirectory": "dist",
     "routes": [
         {
             "src": "/(.*)",
