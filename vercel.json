@@ -2,10 +2,10 @@
     "version": 2,
     "builds": [
         {
-            "src": "api/vercel.js",
+            "src": "api/**/*.js",
             "use": "@vercel/node",
             "config": {
-                "includeFiles": ["dist/**", "pages/**", ".well-known/**"]
+                "includeFiles": ["dist/**"]
             }
         },
         {
@@ -19,8 +19,8 @@
     ],
     "routes": [
         {
-            "src": "/authentication/(.*)",
-            "dest": "api/vercel.js"
+            "src": "/authentication/creationOptions",
+            "dest": "api/authentication/creationOptions.js"
         },
         {
             "src": "/",
