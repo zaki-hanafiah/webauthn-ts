@@ -23,6 +23,10 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'pages', 'home.html'))
 })
 
-app.listen(process.env.PORT || 4430, () => {
-    console.log('Server is running on port 4430!')
-})
+if (process.env.VERCEL === undefined) {
+    app.listen(process.env.PORT || 4430, () => {
+        console.log('Server is running on port 4430!')
+    })
+}
+
+export default app
