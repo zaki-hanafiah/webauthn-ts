@@ -2,37 +2,21 @@
     "version": 2,
     "builds": [
         {
-            "src": "api/**/*.js",
+            "src": "dist/index.js",
             "use": "@vercel/node",
             "config": {
-                "includeFiles": ["dist/**"]
+                "includeFiles": ["dist/**", "pages/**", ".well-known/**"]
             }
-        },
-        {
-            "src": "pages/**",
-            "use": "@vercel/static"
-        },
-        {
-            "src": ".well-known/**",
-            "use": "@vercel/static"
         }
     ],
     "routes": [
         {
-            "src": "/authentication/creationOptions",
-            "dest": "api/authentication/creationOptions.js"
+            "src": "/authentication/(.*)",
+            "dest": "dist/index.js"
         },
         {
-            "src": "/",
-            "dest": "pages/home.html"
-        },
-        {
-            "src": "/(.*\\.js)",
-            "dest": "pages/$1"
-        },
-        {
-            "src": "/(.*\\.css)",
-            "dest": "pages/$1"
+            "src": "/(.*)",
+            "dest": "dist/index.js"
         }
     ]
 }
