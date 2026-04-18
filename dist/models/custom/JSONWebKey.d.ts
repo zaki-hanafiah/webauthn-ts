@@ -1,5 +1,8 @@
 export interface JSONWebKey {
-    e: string;
     kty: string;
-    n: string;
+    n?: string;
+    e?: string;
+    crv?: string;
+    x?: string;
+    y?: string;
 }

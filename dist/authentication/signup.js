@@ -30,6 +30,8 @@ const cache = __importStar(require("../storage/challengeCache"));
 const Packed_1 = require("../models/fido/Attestation Statement Format/Packed");
 const FIDO_U2F_1 = require("../models/fido/Attestation Statement Format/FIDO U2F");
 const None_1 = require("../models/fido/Attestation Statement Format/None");
+const TPM_1 = require("../models/fido/Attestation Statement Format/TPM");
+const Apple_1 = require("../models/fido/Attestation Statement Format/Apple");
 const CBOR = __importStar(require("cbor"));
 function registerKey(keyCredentialObject, userId) {
     const clientData = JSON.parse(keyCredentialObject.clientDataJSON);
@@ -109,7 +111,9 @@ function registerKey(keyCredentialObject, userId) {
     }
     if (!((0, Packed_1.isPackedAttestation)(attestation) ||
         (0, FIDO_U2F_1.isFIDOU2FAttestation)(attestation) ||
-        (0, None_1.isNoneAttestation)(attestation))) {
+        (0, None_1.isNoneAttestation)(attestation) ||
+        (0, TPM_1.isTPMAttestation)(attestation) ||
+        (0, Apple_1.isAppleAttestation)(attestation))) {
         return {
             status: 403,
             text: "The request doesn't match any known attestation type and can therefore not be processed",
@@ -125,6 +129,12 @@ function registerKey(keyCredentialObject, userId) {
             break;
         case 'none':
             validAttestationSignature = (0, None_1.NoneVerify)();
+            break;
+        case 'tpm':
+            validAttestationSignature = (0, TPM_1.TPMVerify)(attestation, attestation.attStmt, clientDataHash, authenticatorData);
+            break;
+        case 'apple':
+            validAttestationSignature = (0, Apple_1.AppleVerify)(attestation, clientDataHash, authenticatorData);
             break;
         default:
             break;
