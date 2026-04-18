@@ -20,6 +20,15 @@ import {
     isNoneAttestation,
     NoneVerify,
 } from '../models/fido/Attestation Statement Format/None'
+import {
+    isTPMAttestation,
+    TPMVerify,
+    TPMStmt,
+} from '../models/fido/Attestation Statement Format/TPM'
+import {
+    isAppleAttestation,
+    AppleVerify,
+} from '../models/fido/Attestation Statement Format/Apple'
 
 import * as CBOR from 'cbor'
 import { AuthenticatorData } from '../models/fido/AuthenticatorData'
@@ -165,7 +174,9 @@ export function registerKey(
         !(
             isPackedAttestation(attestation) ||
             isFIDOU2FAttestation(attestation) ||
-            isNoneAttestation(attestation)
+            isNoneAttestation(attestation) ||
+            isTPMAttestation(attestation) ||
+            isAppleAttestation(attestation)
         )
     ) {
         return {
@@ -195,6 +206,21 @@ export function registerKey(
             break
         case 'none':
             validAttestationSignature = NoneVerify()
+            break
+        case 'tpm':
+            validAttestationSignature = TPMVerify(
+                attestation,
+                attestation.attStmt as TPMStmt,
+                clientDataHash,
+                authenticatorData
+            )
+            break
+        case 'apple':
+            validAttestationSignature = AppleVerify(
+                attestation,
+                clientDataHash,
+                authenticatorData
+            )
             break
         default:
             break

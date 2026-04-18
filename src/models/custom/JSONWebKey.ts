@@ -1,5 +1,10 @@
 export interface JSONWebKey {
-    e: string
     kty: string
-    n: string
+    // RSA fields
+    n?: string
+    e?: string
+    // EC fields
+    crv?: string
+    x?: string
+    y?: string
 }
