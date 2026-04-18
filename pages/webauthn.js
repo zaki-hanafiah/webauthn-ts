@@ -41,8 +41,6 @@ async function register(userId, userName, pin) {
         )
         publicKeyCredentialCreationOptions.user.name = userName
         publicKeyCredentialCreationOptions.user.displayName = userName
-        publicKeyCredentialCreationOptions.authenticatorSelection.authenticatorAttachment =
-            'cross-platform'
         publicKeyCredentialCreationOptions.authenticatorSelection.userVerification =
             'required'
 
